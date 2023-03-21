@@ -1,3 +1,5 @@
+
+
 def TranSeven(Arr, x):
     index = 0
     word = []
@@ -42,8 +44,14 @@ def TranEight(Arr, x):
         answer += f
     print(answer)
 
-testStr = "01101000011001010110110001101100011110000000100001101111"
-charArr = [char for char in testStr]
+file = input("Please enter the name and extension of a text file: ")
+openFile = open(file, 'r')
+testStr = openFile.read()
+#print(testStr)
+charArr = []
+for char in testStr:
+    if(char == '0' or char == '1'):
+        charArr.append(char)
 
 l = len(charArr)
 a = l/7
@@ -58,3 +66,5 @@ elif(l%8 == 0):
     TranEight(charArr, b)
 else:
     print("Invalid length of binary.")
+
+openFile.close()
