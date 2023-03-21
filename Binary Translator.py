@@ -10,8 +10,11 @@ def TranSeven(Arr, x):
                 ASCII += addTo
             addTo = addTo/2
             index += 1
-        character = chr(int(ASCII))
-        word.append(character)
+        if(int(ASCII) == 8): # Recognizes if ASCII is 8 "Backspace" and
+            word.pop() # Removes the most recently added item
+        else:
+            character = chr(int(ASCII))
+            word.append(character)
     answer = ""
     for f in word:
         answer += f
@@ -29,14 +32,17 @@ def TranEight(Arr, x):
                 ASCII += addTo
             addTo = addTo/2
             index += 1
-        character = chr(int(ASCII))
-        word.append(character)
+        if(int(ASCII) == 8):
+            word.pop()
+        else:
+            character = chr(int(ASCII))
+            word.append(character)
     answer = ""
     for f in word:
         answer += f
     print(answer)
 
-testStr = "01100111011011110010000001110100011010010110110101100101"
+testStr = "01101000011001010110110001101100011110000000100001101111"
 charArr = [char for char in testStr]
 
 l = len(charArr)
