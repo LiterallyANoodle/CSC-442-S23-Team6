@@ -44,8 +44,7 @@ def TranEight(Arr, x):
         answer += f
     print(answer)
 
-file = sys.stdin
-testStr = file.read()
+testStr = sys.stdin.read()
 charArr = []
 for char in testStr:
     if(char == '0' or char == '1'):
@@ -65,4 +64,3 @@ elif(l%8 == 0):
 else:
     print("Invalid length of binary.")
 
-file.close()
