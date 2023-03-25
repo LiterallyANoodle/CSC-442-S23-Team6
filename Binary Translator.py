@@ -1,4 +1,4 @@
-
+import sys
 
 def TranSeven(Arr, x):
     index = 0
@@ -44,10 +44,9 @@ def TranEight(Arr, x):
         answer += f
     print(answer)
 
-file = input("Please enter the name and extension of a text file: ")
-openFile = open(file, 'r')
-testStr = openFile.read()
-#print(testStr)
+file = sys.stdin
+testStr = file.read()
+print(testStr)
 charArr = []
 for char in testStr:
     if(char == '0' or char == '1'):
@@ -57,14 +56,9 @@ l = len(charArr)
 a = l/7
 b = l/8
 
-if(l%7 == 0 and l%8 == 0):
+if(l%7 == 0):
     TranSeven(charArr, a)
+if(l%8 == 0):
     TranEight(charArr, b)
-elif(l%7 == 0):
-    TranSeven(charArr, a)
-elif(l%8 == 0):
-    TranEight(charArr, b)
-else:
-    print("Invalid length of binary.")
 
 openFile.close()
