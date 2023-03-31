@@ -1,11 +1,11 @@
 from ftplib import FTP
 
 # FTP server details
-IP = "138.47.99.64"
+IP = "138.47.136.89"
 PORT = 21
-USER = "anonymous"
-PASSWORD = ""
-DIRECTORY = "10/"
+USER = "ianmalcolm"
+PASSWORD = "jurassicpark"
+DIRECTORY = "files/10"
 METHOD = 10 # 7 or 10
 USE_PASSIVE = True # set to False if the connection times out
 
