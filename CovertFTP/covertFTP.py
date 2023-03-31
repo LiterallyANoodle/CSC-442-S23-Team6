@@ -68,7 +68,7 @@ def ten_decode(binaries):
     chars = []
     while len(totality) >= 7:
         slices.append(totality[:7])
-        chars.append(chr(int(totality[:7])))
+        chars.append(chr(int(totality[:7], 2)))
         totality = totality[7:]
 
     # make the converted char list into string 
@@ -95,11 +95,11 @@ if __name__ == "__main__":
     # Variables 
     # Timo FTP is 138.47.99.64 on port 21
     DEBUG = True
-    HOST = '138.47.99.64'
-    PORT = 21
+    HOST = 'localhost'
+    PORT = 54321
     USER = 'anonymous'
     PASS = ''
-    DIRECTORY = '/10'
+    DIRECTORY = '/'
     USE_PASSIVE = True
     METHOD = False # True indicates 7 bit mode and False indicates 10 bit mode 
 
