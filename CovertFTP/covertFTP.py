@@ -95,13 +95,13 @@ if __name__ == "__main__":
     # Variables 
     # Timo FTP is 138.47.99.64 on port 21
     DEBUG = True
-    HOST = 'localhost'
-    PORT = 54321
+    HOST = '138.47.143.6'   
+    PORT = 21
     USER = 'anonymous'
     PASS = ''
     DIRECTORY = '/'
     USE_PASSIVE = True
-    METHOD = False # True indicates 7 bit mode and False indicates 10 bit mode 
+    METHOD = True # True indicates 7 bit mode and False indicates 10 bit mode 
 
     # Gather information from server
     ftp = FTP()
