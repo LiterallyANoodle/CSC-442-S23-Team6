@@ -1,22 +1,37 @@
 from socket import *
 from time import sleep 
 
-port = 1337
+def main():
 
-s = socket(AF_INET, SOCK_STREAM)
-s.bind(("", port))
+    # server setup 
+    port = 1337
+    repeat = True
 
-s.listen(0)
-print("Server is listening...") 
+    s = socket(AF_INET, SOCK_STREAM)
+    s.bind(("", port))
 
-c, addr = s.accept()
+    # continuously send messages to connecting clients 
+    while (repeat):
+        s.listen(0)
+        print("Server is listening...") 
 
-message = "Some message...\n"
+        c, addr = s.accept()
 
-for i in message: 
-    c.send(i.encode())
-    sleep(0.1)
+        # my messages
+        message = "Some message...\n"
+        covert_message = "Secret"
 
-c.send("EOF".encode())
-print("Message sent...")
-c.close()
+        # send one letter at a time
+        for i in message: 
+            c.send(i.encode())
+            sleep(0.1)
+
+        # end and cleanup 
+        c.send("EOF".encode())
+        print("Message sent...")
+    
+    # cleanup
+    c.close()
+
+if __name__ == "__main__": 
+    main()
