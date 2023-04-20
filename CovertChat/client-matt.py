@@ -3,22 +3,22 @@ from sys import stdout
 from time import time 
 
 # function translates deltas back into bits 
-def read_covert(deltas):
+def read_covert(deltas, cutoff=0.25, slice_size=7):
 
     # deltas to bits
     bits = []
     for d in deltas:
-        if d > 0.25:
+        if d > cutoff:
             bits.append('1')
         else:
             bits.append('0')
 
     # slice bits
     char_bits = []
-    bits_length = range(len(bits)//7)
+    bits_length = range(len(bits)//slice_size)
     for i in bits_length:
-        char_bits.append("".join(bits[:7]))
-        bits = bits[7:]
+        char_bits.append("".join(bits[:slice_size]))
+        bits = bits[slice_size:]
 
     if DEBUG:
         print(char_bits)
@@ -40,6 +40,8 @@ def read_covert(deltas):
 def main():
 
     # connection setup 
+    # test server is 138.47.99.64
+    # port 31337
     ip = "138.47.99.64"
     port = 31337
 
@@ -64,12 +66,47 @@ def main():
     s.close()
 
     if DEBUG:
-        print(deltas)
+        print("DELTAS ------------->", deltas)
+        print("DELTAS LEN --------->", len(deltas))
 
-    covert_message = read_covert(deltas)
+    cutoff = 0.07
+    slice_size = 8
+    covert_message = read_covert(deltas, cutoff, slice_size)
     print(covert_message)
 
+    return deltas
+
+# test to find the average timing over many iterations 
+# this helps in finding the cutoff point 
+def average_test():
+    deltass = []
+    avgs = []
+    for i in range(3): # send 5 requests for a message 
+        deltass.append(main())
+
+    # align by columns instead of rows in the matrix 
+    columns = []
+    for i in range(len(deltass[0])):
+        column = []
+        for row in deltass:
+            column.append(row[i])
+        columns.append(column)
+
+    print("DELTASS --->", deltass)
+    print("COLUMNS --->", columns)
+
+    # average every column 
+    for col in columns:
+        avgs.append(round(sum(col)/len(col), 3))
+
+    print("AVGS ------>", avgs)
 
 if __name__ == "__main__":
-    DEBUG = False
-    main()
+    DEBUG = True
+    AVG_TEST = False
+
+    if AVG_TEST:
+        average_test()
+    else:
+        main()
+    
