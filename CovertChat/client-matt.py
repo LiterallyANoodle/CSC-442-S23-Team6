@@ -29,9 +29,11 @@ def read_covert(deltas, cutoff=0.25, slice_size=7):
         chars.append(int(char, 2))
 
     # remove any trailing 0's (ints)
-    chars = [chr(item) for item in chars if item != 0 ]
+    chars_ints = [ item for item in chars if item != 0 ]
+    chars = [ chr(item) for item in chars if item != 0 ]
 
     if DEBUG:
+        print("CHARS_INTS ------->", chars_ints)
         print(chars)
 
     return "".join(chars)
@@ -104,9 +106,9 @@ def average_test(cutoff, slice_size):
 
 if __name__ == "__main__":
     DEBUG = True
-    AVG_TEST = True
+    AVG_TEST = False
 
-    cutoff_control = 0.07
+    cutoff_control = 0.1
     slice_size_control = 8
 
     if AVG_TEST:

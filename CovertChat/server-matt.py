@@ -14,8 +14,8 @@ def chopping_time(covert_message):
         # str_bytes.append(b)
 
         # convert bits into timings 
-        # d > 0.05 returns a 1 
-        # d <= 0.05 returns a 0 
+        # d > 0.07 returns a 1 
+        # d <= 0.07 returns a 0 
         byte_clean = bin(byte)[2:]
         if DEBUG:
             print(byte, byte_clean)
@@ -25,7 +25,7 @@ def chopping_time(covert_message):
             if bit == '1':
                 deltas.append(0.1)
             else:
-                deltas.append(0.01)
+                deltas.append(0.05)
 
     if DEBUG:
         print(deltas)
