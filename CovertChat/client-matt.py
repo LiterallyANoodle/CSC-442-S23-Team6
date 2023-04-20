@@ -37,7 +37,7 @@ def read_covert(deltas, cutoff=0.25, slice_size=7):
     return "".join(chars)
 
 
-def main():
+def main(cutoff, slice_size):
 
     # connection setup 
     # test server is 138.47.99.64
@@ -69,8 +69,6 @@ def main():
         print("DELTAS ------------->", deltas)
         print("DELTAS LEN --------->", len(deltas))
 
-    cutoff = 0.07
-    slice_size = 8
     covert_message = read_covert(deltas, cutoff, slice_size)
     print(covert_message)
 
@@ -78,15 +76,16 @@ def main():
 
 # test to find the average timing over many iterations 
 # this helps in finding the cutoff point 
-def average_test():
+def average_test(cutoff, slice_size):
     deltass = []
     avgs = []
     for i in range(3): # send 5 requests for a message 
-        deltass.append(main())
+        deltass.append(main(cutoff, slice_size))
 
     # align by columns instead of rows in the matrix 
     columns = []
-    for i in range(len(deltass[0])):
+    deltass_min = min([len(d) for d in deltass])
+    for i in range(deltass_min):
         column = []
         for row in deltass:
             column.append(row[i])
@@ -101,12 +100,17 @@ def average_test():
 
     print("AVGS ------>", avgs)
 
+    print(read_covert(avgs, cutoff, slice_size))
+
 if __name__ == "__main__":
     DEBUG = True
-    AVG_TEST = False
+    AVG_TEST = True
+
+    cutoff_control = 0.07
+    slice_size_control = 8
 
     if AVG_TEST:
-        average_test()
+        average_test(cutoff_control, slice_size_control)
     else:
-        main()
+        main(cutoff_control, slice_size_control)
     
