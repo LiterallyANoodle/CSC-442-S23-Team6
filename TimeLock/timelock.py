@@ -135,6 +135,8 @@ def options():
 	for op in sys.argv:
 		if op in ['-E', '-7']:
 			epoch = options_epoch(op)
+
+		# option -c will allow the user to input a string containing the "now" they want to use
 		if (op == '-c'):
 			op_index = sys.argv.index(op)
 			now = parse_time(sys.argv[op_index+1])
