@@ -142,7 +142,9 @@ def options():
 			now = parse_time(sys.argv[op_index+1])
 
 	if epoch == -1:
-		epoch = parse_time(sys.stdin)
+		if DEBUG:
+			print(sys.stdin.readlines()[0])
+		epoch = parse_time(sys.stdin.readlines()[0])
 
 	return (epoch, now)
 
