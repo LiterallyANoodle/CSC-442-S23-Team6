@@ -1,3 +1,5 @@
+# This program was created by Matthew Mahan of team Pterodactyl. 
+
 from hashlib import md5
 from datetime import datetime
 import sys
