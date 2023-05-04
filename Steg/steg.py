@@ -158,7 +158,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 	# recovered_bytes = recovered_bytes[:len(recovered_bytes)-6]
 	
 	# save the recovered file 
-	with open('recovered_bytes.gif', 'wb') as result_file:
+	with open('main_unsteg.gif', 'wb') as result_file:
 		result_file.write(recovered_bytes) 
 
 	# open the bits filled file for recovery
@@ -179,7 +179,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 		print(f"Recovered slice: \n{recovered_bits[len(recovered_bits)-10:]}\n")
 	
 	# save the recovered file 
-	with open('recovered_bits.gif', 'wb') as result_file:
+	with open('main_unsteg.gif', 'wb') as result_file:
 		result_file.write(recovered_bits) 
 
 # Detect options for CLI usage
@@ -302,4 +302,4 @@ if __name__ == "__main__":
 	DEBUG = True
 	main()
 	# if DEBUG:
-	# 	pdf_test('kinda_big_wrapper.bmp', 'not_tiny_payload.gif', 'result_bytes.bmp', 'result_bits.bmp')
+	# 	pdf_test('kinda_big_wrapper.bmp', 'not_tiny_payload.gif', 'main_steg.bmp', 'result_bits.bmp')
