@@ -70,7 +70,7 @@ def recover_by_bits(modified, sentinel, offset, interval):
 	i = 0
 	j = offset
 	# funky while loop that keeps track of the two scaled intervals 
-	while i < (len(modified)) // 8:
+	while j < len(modified):
 
 		# for bits, this line is a bit more complex:
 		current_byte += str(modified[j] & 0x01)
