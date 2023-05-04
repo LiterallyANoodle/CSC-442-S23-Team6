@@ -61,8 +61,34 @@ def recover_by_bytes(modified, sentinel, offset, interval):
 
 	return recovered_data
 
-def recover_by_bits(modified, offset, interval):
-	pass
+def recover_by_bits(modified, sentinel, offset, interval):
+
+	# next is to extract each byte at the above indexes in the wrapper with the sequential bytes of the payload
+	# for this, it is more convenient to refer to them by a sequential index
+	recovered_data = bytearray()
+	current_byte = ''
+	i = 0
+	j = offset
+	# funky while loop that keeps track of the two scaled intervals 
+	while i < (len(modified)) // 8:
+
+		# for bits, this line is a bit more complex:
+		current_byte += str(modified[j] & 0x01)
+		if len(current_byte) == 8:
+			# print("-->", current_byte)
+			recovered_data.append(int(current_byte, 2))
+			current_byte = ''
+
+		if len(recovered_data) > 6:
+			if recovered_data[len(recovered_data)-6:] == sentinel:
+				if DEBUG:
+					print(f"Recovered slice: \n{recovered_data[len(recovered_data)-6:]}\n")
+					print(f"Sentinel: \n{sentinel}\n")
+				break
+		i += 1
+		j += interval
+
+	return recovered_data
 
 def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_filename, bits_recovery_filename):
 
@@ -126,6 +152,27 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 	# save the recovered file 
 	with open('recovered_bytes.gif', 'wb') as result_file:
 		result_file.write(recovered_bytes) 
+
+	# open the bits filled file for recovery
+	recover_bits_file = open(bits_recovery_filename, 'rb')
+	recover_bits_data = bytearray(recover_bits_file.read())
+	recover_bits_file.close()
+
+	# retrieve without sentinel
+	recovered_bits = recover_by_bits(recover_bits_data, sentinel_bytes, 100, 8)
+	recovered_bits = recovered_bits[:len(recovered_bits)-6]
+
+	if DEBUG:
+		print(f"Payload size: \n{len(payload_data)}\n")
+		print(f"Recovered size: \n{len(recovered_bits)}\n")
+		print(f"Payload slice: \n{payload_data[:20]}\n")
+		print(f"Recovered slice: \n{recovered_bits[:20]}\n")
+		print(f"Payload slice: \n{payload_data[23429-10:23429]}\n")
+		print(f"Recovered slice: \n{recovered_bits[len(recovered_bits)-10:]}\n")
+	
+	# save the recovered file 
+	with open('recovered_bits.gif', 'wb') as result_file:
+		result_file.write(recovered_bits) 
 
 def main():
 	pass
