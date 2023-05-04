@@ -164,5 +164,5 @@ def main():
 
 if __name__ == "__main__":
 	DEBUG = False
-	main()
-	# pdf_examples()
+	# main()
+	pdf_examples()

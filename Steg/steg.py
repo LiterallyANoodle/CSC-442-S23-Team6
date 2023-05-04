@@ -4,7 +4,10 @@ import copy
 import sys
 import argparse
 
-def hide_by_bytes(wrapper, payload, offset, interval):
+def hide_by_bytes(wrapper, payload, sentinel, offset, interval):
+
+	# append sentinel to payload
+	payload = payload + sentinel
 
 	# make a copy of the wrapper
 	modified_wrapper = copy.deepcopy(wrapper)
@@ -19,7 +22,10 @@ def hide_by_bytes(wrapper, payload, offset, interval):
 
 	return modified_wrapper
 
-def hide_by_bits(wrapper, payload, offset, interval):
+def hide_by_bits(wrapper, payload, sentinel, offset, interval):
+
+	# append sentinel to payload
+	payload = payload + sentinel
 
 	# make a copy of the wrapper
 	modified_wrapper = copy.deepcopy(wrapper)
@@ -61,7 +67,7 @@ def recover_by_bytes(modified, sentinel, offset, interval):
 		i += 1
 		j += interval
 
-	return recovered_data
+	return recovered_data[:len(recovered_data)-len(sentinel)]
 
 def recover_by_bits(modified, sentinel, offset, interval):
 
@@ -90,7 +96,7 @@ def recover_by_bits(modified, sentinel, offset, interval):
 		i += 1
 		j += interval
 
-	return recovered_data
+	return recovered_data[:len(recovered_data)-len(sentinel)]
 
 def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_filename, bits_recovery_filename):
 
@@ -106,7 +112,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 	payload_file.close()
 
 	# append sentinel to payload
-	payload_data = payload_data + sentinel_bytes
+	# payload_data = payload_data + sentinel_bytes
 
 	if DEBUG:
 		print(f"Wrapper slice: \n{wrapper_data[1500:1550]}\n")
@@ -115,7 +121,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 		# print(f"Test data bytes: \n{test_data}\n")
 
 	# test hiding by whole bytes
-	bytes_modified_wrapper = hide_by_bytes(wrapper_data, payload_data, 100, 8)
+	bytes_modified_wrapper = hide_by_bytes(wrapper_data, payload_data, sentinel_bytes, 100, 8)
 
 	if DEBUG:
 		print(f"Wrapper size: {len(wrapper_data)}")
@@ -130,7 +136,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 		result_file.write(bytes_modified_wrapper)
 
 	# test hiding by single bits
-	bits_modified_wrapper = hide_by_bits(wrapper_data, payload_data, 100, 8)
+	bits_modified_wrapper = hide_by_bits(wrapper_data, payload_data, sentinel_bytes, 100, 8)
 
 	if DEBUG:
 		print(f"Wrapper size: {len(wrapper_data)}")
@@ -149,7 +155,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 
 	# retrieve without sentinel
 	recovered_bytes = recover_by_bytes(recover_bytes_data, sentinel_bytes, 100, 8)
-	recovered_bytes = recovered_bytes[:len(recovered_bytes)-6]
+	# recovered_bytes = recovered_bytes[:len(recovered_bytes)-6]
 	
 	# save the recovered file 
 	with open('recovered_bytes.gif', 'wb') as result_file:
@@ -162,7 +168,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 
 	# retrieve without sentinel
 	recovered_bits = recover_by_bits(recover_bits_data, sentinel_bytes, 100, 8)
-	recovered_bits = recovered_bits[:len(recovered_bits)-6]
+	# recovered_bits = recovered_bits[:len(recovered_bits)-6]
 
 	if DEBUG:
 		print(f"Payload size: \n{len(payload_data)}\n")
@@ -217,6 +223,7 @@ def options():
 
 	# personally I find it a bit annoying that the pdf defines options as having flags in the suffix.
 	# this would be much easier if the options and their flags were separate 
+	# especially on windows, this is an issue
 	for arg in sys.argv:
 		# offset
 		if arg[:2] == '-o':
@@ -227,12 +234,14 @@ def options():
 			flags['interval'] = int(arg[2:])
 			continue
 		# wrapper name
+		# for windows, quotes are required 
 		if arg[:2] == '-w':
-			flags['wrapper_filename'] = str(arg[2:])
+			flags['wrapper_filename'] = str(arg[2:]).strip('"')
 			continue
 		# payload name 
+		# for windows, quotes are required
 		if arg[:2] == '-h':
-			flags['payload_filename'] = str(arg[2:])
+			flags['payload_filename'] = str(arg[2:]).strip('"')
 			continue
 
 	# final check
@@ -245,10 +254,50 @@ def options():
 
 	return flags
 
+# main function
 def main():
 	
-	print(options())
+	# determine options used 
+	flags = options()
 
+	# open the specified file(s)
+	wrapper_data = None
+	if flags['wrapper_filename'] != '':
+		wrapper_file = open(flags['wrapper_filename'], 'rb')
+		wrapper_data = bytearray(wrapper_file.read())
+		wrapper_file.close()
+
+	payload_data = None
+	if flags['payload_filename'] != '':
+		payload_file = open(flags['payload_filename'], 'rb')
+		payload_data = bytearray(payload_file.read())
+		payload_file.close()
+
+	# set sentinel 
+	# im moving sentinel building/removing into the core functions to make this more modular
+	sentinel_bytes = bytearray(b'\x00\xff\x00\x00\xff\x00')
+
+	# determine which function to use 
+	# required params: 
+	# wrapper_data, payload_data, offset, interval, modified (wrapper_data), sentinel_bytes
+	# that's 5 total... 
+	callback = 	{ ('hide', 'bit'): (lambda wrapper, payload, sentinel, offset, interval : hide_by_bits(wrapper, payload, sentinel, offset, interval)), 
+				  ('hide', 'byte'): (lambda wrapper, payload, sentinel, offset, interval : hide_by_bytes(wrapper, payload, sentinel, offset, interval)), 
+				  ('recover', 'bit'): (lambda wrapper, payload, sentinel, offset, interval : recover_by_bits(wrapper, sentinel, offset, interval)), 
+				  ('recover', 'byte'): (lambda wrapper, payload, sentinel, offset, interval : recover_by_bytes(wrapper, sentinel, offset, interval)) 
+				}
+
+	# run the specified callback function and receive either 
+	# 1. the relevant stegged bytes
+	# 2. the relevant recovered bytes
+	received_bytes = callback[(flags['IO_mode'], flags['data_size'])](wrapper_data, payload_data, sentinel_bytes, flags['offset'], flags['interval'])
+
+	# send the received bytes into stdout 
+	sys.stdout.flush()
+	sys.stdout.buffer.write(received_bytes)
+	# sys.stdout.flush()
+
+# entry point 
 if __name__ == "__main__":
 	DEBUG = True
 	main()
