@@ -41,7 +41,30 @@ def hide_by_bits(wrapper, payload, offset, interval):
 
 	return modified_wrapper
 
-def pdf_test(wrapper_input_filename, payload_input_filename):
+def recover_by_bytes(modified, sentinel, offset, interval):
+
+	# next is to extract each byte at the above indexes in the wrapper with the sequential bytes of the payload
+	# for this, it is more convenient to refer to them by a sequential index
+	recovered_data = bytearray()
+	i = 0
+	j = offset
+	# funky while loop that keeps track of the two scaled intervals 
+	while j < ((len(modified) - offset) // interval):
+		recovered_data.append(modified[j])
+		if len(recovered_data) > 6:
+			if recovered_data[len(recovered_data)-6:] == sentinel:
+				print(f"Recovered slice: \n{recovered_data[len(recovered_data)-6:]}")
+				print(f"Sentinel: \n{sentinel}")
+				break
+		i += 1
+		j += interval
+
+	return recovered_data
+
+def recover_by_bits(modified, offset, interval):
+	pass
+
+def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_filename, bits_recovery_filename):
 
 	# create/obtain necessary pieces of data 
 	sentinel_bytes = bytearray(b'\x00\xff\x00\x00\xff\x00')
@@ -90,7 +113,19 @@ def pdf_test(wrapper_input_filename, payload_input_filename):
 	# save the resulting file 
 	with open('result_bits.bmp', 'wb') as result_file:
 		result_file.write(bits_modified_wrapper)
+
+	# open the bytes filled file for recovery
+	recover_bytes_file = open(bytes_recovery_filename, 'rb')
+	recover_bytes_data = bytearray(recover_bytes_file.read())
+	recover_bytes_file.close()
+
+	# retrieve without sentinel
+	recovered_bytes = recover_by_bytes(recover_bytes_data, sentinel_bytes, 100, 8)
+	recovered_bytes = recovered_bytes[:len(recovered_bytes)-6]
 	
+	# save the recovered file 
+	with open('recovered_bytes.gif', 'wb') as result_file:
+		result_file.write(recovered_bytes) 
 
 def main():
 	pass
@@ -99,4 +134,4 @@ if __name__ == "__main__":
 	DEBUG = True
 	main()
 	if DEBUG:
-		pdf_test('kinda_big_wrapper.bmp', 'not_tiny_payload.gif')
+		pdf_test('kinda_big_wrapper.bmp', 'not_tiny_payload.gif', 'result_bytes.bmp', 'result_bits.bmp')
