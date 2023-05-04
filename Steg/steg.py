@@ -1,6 +1,8 @@
 # this program was created by Matthew Mahan for team Pterodactyl 
 
 import copy
+import sys
+import argparse
 
 def hide_by_bytes(wrapper, payload, offset, interval):
 
@@ -174,11 +176,81 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 	with open('recovered_bits.gif', 'wb') as result_file:
 		result_file.write(recovered_bits) 
 
+# Detect options for CLI usage
+def options():
+
+	if (len(sys.argv) < 5):
+		print("Missing flags. Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		exit()
+
+	flags = { 'IO_mode': None, 'data_size': None, 'offset': 0, 'interval': 1, 'wrapper_filename': "", 'payload_filename': "" }
+
+	# Input output flag checking
+	IO_count = 0
+	if '-s' in sys.argv:
+		flags['IO_mode'] = "hide"
+		IO_count += 1
+	if '-r' in sys.argv:
+		flags['IO_mode'] = "recover"
+		IO_count += 1
+	if IO_count < 1:
+		print("Missing required flag -(sr). Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		exit()
+	if IO_count > 1:
+		print("Flags -s and -r must be mutually exclusive. Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		exit()
+
+	# data piece size checking 
+	size_count = 0
+	if '-b' in sys.argv:
+		flags['data_size'] = "bit"
+		size_count += 1
+	if '-B' in sys.argv:
+		flags['data_size'] = "byte"
+		size_count += 1
+	if size_count < 1:
+		print("Missing required flag -(bB). Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		exit()
+	if size_count > 1:
+		print("Flags -b and -B must be mutually exclusive. Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		exit()
+
+	# personally I find it a bit annoying that the pdf defines options as having flags in the suffix.
+	# this would be much easier if the options and their flags were separate 
+	for arg in sys.argv:
+		# offset
+		if arg[:2] == '-o':
+			flags['offset'] = int(arg[2:])
+			continue 
+		# interval
+		if arg[:2] == '-i':
+			flags['interval'] = int(arg[2:])
+			continue
+		# wrapper name
+		if arg[:2] == '-w':
+			flags['wrapper_filename'] = str(arg[2:])
+			continue
+		# payload name 
+		if arg[:2] == '-h':
+			flags['payload_filename'] = str(arg[2:])
+			continue
+
+	# final check
+	if flags['wrapper_filename'] == '':
+		print("Missing required argument -w. Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		exit()
+	if (flags['IO_mode'] == 'hide' and flags['payload_filename'] == ''):
+		print("Missing necessary argument -h. Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		exit()
+
+	return flags
+
 def main():
-	pass
+	
+	print(options())
 
 if __name__ == "__main__":
 	DEBUG = True
 	main()
-	if DEBUG:
-		pdf_test('kinda_big_wrapper.bmp', 'not_tiny_payload.gif', 'result_bytes.bmp', 'result_bits.bmp')
+	# if DEBUG:
+	# 	pdf_test('kinda_big_wrapper.bmp', 'not_tiny_payload.gif', 'result_bytes.bmp', 'result_bits.bmp')
