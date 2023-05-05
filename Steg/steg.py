@@ -6,11 +6,15 @@ import argparse
 
 def hide_by_bytes(wrapper, payload, sentinel, offset, interval):
 
-	# append sentinel to payload
-	payload = payload + sentinel
-
 	# make a copy of the wrapper
 	modified_wrapper = copy.deepcopy(wrapper)
+	# modified_wrapper = wrapper
+
+	if DEBUG:
+		print(f"Wrapper size: {len(wrapper)}")
+		print(f"Deepcopy size: {len(modified_wrapper)}")
+		print(f"Wrapper slice: \n{wrapper[:10]}\n")
+		print(f"Deepcopy slice: \n{modified_wrapper[:10]}\n")
 
 	# first, find the indexes of bytes which will be replaced in the wrapper 
 	replace_indexes = range(offset, (len(payload) * interval) + offset, interval)
@@ -22,10 +26,25 @@ def hide_by_bytes(wrapper, payload, sentinel, offset, interval):
 
 	return modified_wrapper
 
+# def hide_by_bytes(wrapper, payload, offset, interval):
+
+# 	# make a copy of the wrapper
+# 	modified_wrapper = copy.deepcopy(wrapper)
+
+# 	# first, find the indexes of bytes which will be replaced in the wrapper 
+# 	replace_indexes = range(offset, (len(payload) * interval) + offset, interval)
+
+# 	# next is to swap each byte at the above indexes in the wrapper with the sequential bytes of the payload
+# 	# for this, it is more convenient to refer to them by a sequential index
+# 	for i in range(len(replace_indexes)):
+# 		modified_wrapper[replace_indexes[i]] = payload[i]
+
+# 	return modified_wrapper
+
 def hide_by_bits(wrapper, payload, sentinel, offset, interval):
 
 	# append sentinel to payload
-	payload = payload + sentinel
+	# payload = payload + sentinel
 
 	# make a copy of the wrapper
 	modified_wrapper = copy.deepcopy(wrapper)
@@ -57,7 +76,7 @@ def recover_by_bytes(modified, sentinel, offset, interval):
 	i = 0
 	j = offset
 	# funky while loop that keeps track of the two scaled intervals 
-	while j < ((len(modified) - offset) // interval):
+	while j < len(modified):
 		recovered_data.append(modified[j])
 		if len(recovered_data) > 6:
 			if recovered_data[len(recovered_data)-6:] == sentinel:
@@ -132,7 +151,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 		print(f"Modified slice: \n{bytes_modified_wrapper[:100]}\n")
 
 	# save the resulting file
-	with open('result_bytes.bmp', 'wb') as result_file:
+	with open('main_bytes.bmp', 'wb') as result_file:
 		result_file.write(bytes_modified_wrapper)
 
 	# test hiding by single bits
@@ -145,7 +164,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 		print(f"Modified slice: \n{bits_modified_wrapper[100:120]}\n")
 
 	# save the resulting file 
-	with open('result_bits.bmp', 'wb') as result_file:
+	with open('main_bits.bmp', 'wb') as result_file:
 		result_file.write(bits_modified_wrapper)
 
 	# open the bytes filled file for recovery
@@ -158,7 +177,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 	# recovered_bytes = recovered_bytes[:len(recovered_bytes)-6]
 	
 	# save the recovered file 
-	with open('main_unsteg.gif', 'wb') as result_file:
+	with open('main_unbytes.gif', 'wb') as result_file:
 		result_file.write(recovered_bytes) 
 
 	# open the bits filled file for recovery
@@ -179,7 +198,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 		print(f"Recovered slice: \n{recovered_bits[len(recovered_bits)-10:]}\n")
 	
 	# save the recovered file 
-	with open('main_unsteg.gif', 'wb') as result_file:
+	with open('main_unbits.gif', 'wb') as result_file:
 		result_file.write(recovered_bits) 
 
 # Detect options for CLI usage
@@ -267,7 +286,7 @@ def main():
 		wrapper_data = bytearray(wrapper_file.read())
 		wrapper_file.close()
 
-	payload_data = None
+	payload_data = bytearray()
 	if flags['payload_filename'] != '':
 		payload_file = open(flags['payload_filename'], 'rb')
 		payload_data = bytearray(payload_file.read())
@@ -276,6 +295,9 @@ def main():
 	# set sentinel 
 	# im moving sentinel building/removing into the core functions to make this more modular
 	sentinel_bytes = bytearray(b'\x00\xff\x00\x00\xff\x00')
+
+	# append sentinel to payload
+	payload_data = payload_data + sentinel_bytes
 
 	# determine which function to use 
 	# required params: 
@@ -287,15 +309,31 @@ def main():
 				  ('recover', 'byte'): (lambda wrapper, payload, sentinel, offset, interval : recover_by_bytes(wrapper, sentinel, offset, interval)) 
 				}
 
-	# run the specified callback function and receive either 
-	# 1. the relevant stegged bytes
-	# 2. the relevant recovered bytes
+	# # run the specified callback function and receive either 
+	# # 1. the relevant stegged bytes
+	# # 2. the relevant recovered bytes
 	received_bytes = callback[(flags['IO_mode'], flags['data_size'])](wrapper_data, payload_data, sentinel_bytes, flags['offset'], flags['interval'])
 
+	# I HATE RETURN BY REFERENCE I HATE RETURN BY REFERENCE I HATE RETURN BY REFERENCE
+	# actually return by reference is ok
+	# received_bytes = None
+
+	# if (flags['IO_mode'], flags['data_size']) == ('hide', 'bit'):
+	# 	received_bytes = hide_by_bits(wrapper_data, payload_data, sentinel_bytes, flags['offset'], flags['interval'])
+	# elif (flags['IO_mode'], flags['data_size']) == ('hide', 'byte'):
+	# 	received_bytes = hide_by_bytes(wrapper_data, payload_data, sentinel_bytes, flags['offset'], flags['interval'])
+	# elif (flags['IO_mode'], flags['data_size']) == ('recover', 'bit'):
+	# 	received_bytes = recover_by_bits(wrapper_data, sentinel_bytes, flags['offset'], flags['interval'])
+	# elif (flags['IO_mode'], flags['data_size']) == ('recover', 'byte'):
+	# 	received_bytes = recover_by_bytes(wrapper_data, sentinel_bytes, flags['offset'], flags['interval'])
+
 	# send the received bytes into stdout 
-	sys.stdout.flush()
-	sys.stdout.buffer.write(received_bytes)
 	# sys.stdout.flush()
+	sys.stdout.buffer.write(bytes(received_bytes))
+
+	if DEBUG:
+		with open('testfile', 'wb') as testfile:
+			testfile.write(received_bytes) 
 
 # entry point 
 if __name__ == "__main__":
