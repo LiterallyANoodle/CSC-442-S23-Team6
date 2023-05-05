@@ -13,7 +13,7 @@ def hide_by_bytes(wrapper, payload, sentinel, offset, interval):
 	if DEBUG:
 		print(f"Wrapper size: {len(wrapper)}")
 		print(f"Deepcopy size: {len(modified_wrapper)}")
-
+		print(f"Wrapper slice: \n{wrapper[:10]}\n")
 		print(f"Deepcopy slice: \n{modified_wrapper[:10]}\n")
 
 	# first, find the indexes of bytes which will be replaced in the wrapper 
@@ -25,6 +25,21 @@ def hide_by_bytes(wrapper, payload, sentinel, offset, interval):
 		modified_wrapper[replace_indexes[i]] = payload[i]
 
 	return modified_wrapper
+
+# def hide_by_bytes(wrapper, payload, offset, interval):
+
+# 	# make a copy of the wrapper
+# 	modified_wrapper = copy.deepcopy(wrapper)
+
+# 	# first, find the indexes of bytes which will be replaced in the wrapper 
+# 	replace_indexes = range(offset, (len(payload) * interval) + offset, interval)
+
+# 	# next is to swap each byte at the above indexes in the wrapper with the sequential bytes of the payload
+# 	# for this, it is more convenient to refer to them by a sequential index
+# 	for i in range(len(replace_indexes)):
+# 		modified_wrapper[replace_indexes[i]] = payload[i]
+
+# 	return modified_wrapper
 
 def hide_by_bits(wrapper, payload, sentinel, offset, interval):
 
@@ -191,7 +206,7 @@ def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_file
 def options():
 
 	if (len(sys.argv) < 5):
-		print("Missing flags. Usage: \n\n\tpython steg.py -(src) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		print("Missing flags. Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
 		exit()
 
 	flags = { 'IO_mode': None, 'data_size': None, 'offset': 0, 'interval': 1, 'wrapper_filename': "", 'payload_filename': "" }
@@ -204,14 +219,11 @@ def options():
 	if '-r' in sys.argv:
 		flags['IO_mode'] = "recover"
 		IO_count += 1
-	if '-c' in sys.argv:
-		flags['IO_mode'] = "scan"
-		IO_count += 1
 	if IO_count < 1:
-		print("Missing required flag -(src). Usage: \n\n\tpython steg.py -(src) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		print("Missing required flag -(sr). Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
 		exit()
 	if IO_count > 1:
-		print("Flags -s, -r, and -c must be mutually exclusive. Usage: \n\n\tpython steg.py -(src) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		print("Flags -s and -r must be mutually exclusive. Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
 		exit()
 
 	# data piece size checking 
@@ -223,10 +235,10 @@ def options():
 		flags['data_size'] = "byte"
 		size_count += 1
 	if size_count < 1:
-		print("Missing required flag -(bB). Usage: \n\n\tpython steg.py -(src) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		print("Missing required flag -(bB). Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
 		exit()
 	if size_count > 1:
-		print("Flags -b and -B must be mutually exclusive. Usage: \n\n\tpython steg.py -(src) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		print("Flags -b and -B must be mutually exclusive. Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
 		exit()
 
 	# personally I find it a bit annoying that the pdf defines options as having flags in the suffix.
@@ -254,45 +266,13 @@ def options():
 
 	# final check
 	if flags['wrapper_filename'] == '':
-		print("Missing required argument -w. Usage: \n\n\tpython steg.py -(src) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		print("Missing required argument -w. Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
 		exit()
 	if (flags['IO_mode'] == 'hide' and flags['payload_filename'] == ''):
-		print("Missing necessary argument -h. Usage: \n\n\tpython steg.py -(src) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
+		print("Missing necessary argument -h. Usage: \n\n\tpython steg.py -(sr) -(bB) -o<val> [-i<val>] -w<val> [-h<val>]\n")
 		exit()
 
 	return flags
-
-# scan unknown interval for a sentinel after a certain offset
-def scan_by_bytes(wrapper, sentinel, offset, start_interval=1):
-
-	# return value
-	true_interval = -1
-	
-	# start with interval 1 (unlikely)
-	# check every possibile position in the interval 
-	interval = start_interval
-	while (interval * len(sentinel)) < (len(wrapper) - offset): # make sure the current scan fits
-		i = offset
-		if DEBUG:
-			print(f"Current interval: {interval}")
-		while (i + (interval * len(sentinel))) < len(wrapper): # current scan. last index must be in bounds
-			check_indexes = range(i, i + (len(sentinel) * interval), interval)
-			check_slice = bytearray(len(sentinel))
-			for j in range(len(check_indexes)): # generate the possible sentinel in this spot
-				check_slice[j] = wrapper[check_indexes[j]]
-			if check_slice == sentinel: # once the sentinel is found, return the interval
-				true_interval = interval
-				if DEBUG:
-					print(check_slice)
-				return true_interval
-
-			i += interval
-		interval += 1
-
-	return true_interval
-
-def scan_by_bits(wrapper, sentinel, offset, start_interval=1):
-	pass
 
 # main function
 def main():
@@ -327,9 +307,7 @@ def main():
 	callback = 	{ ('hide', 'bit'): (lambda wrapper, payload, sentinel, offset, interval : hide_by_bits(wrapper, payload, sentinel, offset, interval)), 
 				  ('hide', 'byte'): (lambda wrapper, payload, sentinel, offset, interval : hide_by_bytes(wrapper, payload, sentinel, offset, interval)), 
 				  ('recover', 'bit'): (lambda wrapper, payload, sentinel, offset, interval : recover_by_bits(wrapper, sentinel, offset, interval)), 
-				  ('recover', 'byte'): (lambda wrapper, payload, sentinel, offset, interval : recover_by_bytes(wrapper, sentinel, offset, interval)),
-				  ('scan', 'bit'): (lambda wrapper, payload, sentinel, offset, interval : scan_by_bits(wrapper, sentinel, offset)),
-				  ('scan', 'byte'): (lambda wrapper, payload, sentinel, offset, interval : scan_by_bytes(wrapper, sentinel, offset, interval)) 
+				  ('recover', 'byte'): (lambda wrapper, payload, sentinel, offset, interval : recover_by_bytes(wrapper, sentinel, offset, interval)) 
 				}
 
 	# # run the specified callback function and receive either 
@@ -339,18 +317,25 @@ def main():
 
 	# I HATE RETURN BY REFERENCE I HATE RETURN BY REFERENCE I HATE RETURN BY REFERENCE
 	# actually return by reference is ok
-	# print(type(received_bytes))
-	if type(received_bytes) == 'int':
-		print(f"True interval: {received_bytes}")
-	else:
-		# send the received bytes into stdout 
-		sys.stdout.flush()
-		sys.stdout.buffer.write(bytes(received_bytes))
-		# sys.stdout.flush()
+	# received_bytes = None
 
+	# if (flags['IO_mode'], flags['data_size']) == ('hide', 'bit'):
+	# 	received_bytes = hide_by_bits(wrapper_data, payload_data, sentinel_bytes, flags['offset'], flags['interval'])
+	# elif (flags['IO_mode'], flags['data_size']) == ('hide', 'byte'):
+	# 	received_bytes = hide_by_bytes(wrapper_data, payload_data, sentinel_bytes, flags['offset'], flags['interval'])
+	# elif (flags['IO_mode'], flags['data_size']) == ('recover', 'bit'):
+	# 	received_bytes = recover_by_bits(wrapper_data, sentinel_bytes, flags['offset'], flags['interval'])
+	# elif (flags['IO_mode'], flags['data_size']) == ('recover', 'byte'):
+	# 	received_bytes = recover_by_bytes(wrapper_data, sentinel_bytes, flags['offset'], flags['interval'])
 
-	with open('testfile', 'wb') as testfile:
-		testfile.write(bytes(received_bytes)) 
+	# send the received bytes into stdout 
+	sys.stdout.flush()
+	sys.stdout.buffer.write(bytes(received_bytes))
+	# sys.stdout.flush()
+
+	if DEBUG:
+		with open('testfile', 'wb') as testfile:
+			testfile.write(received_bytes) 
 
 # entry point 
 if __name__ == "__main__":
