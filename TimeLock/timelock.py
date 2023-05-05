@@ -157,6 +157,7 @@ def main():
 
 	# produce the hash
 	result_hash = hash_time(epoch, now)
+	print(result_hash[:len(result_hash)//2])
 
 	# produce the code and print
 	code = parse_code(result_hash)
@@ -164,5 +165,5 @@ def main():
 
 if __name__ == "__main__":
 	DEBUG = False
-	# main()
-	pdf_examples()
+	main()
+	# pdf_examples()
