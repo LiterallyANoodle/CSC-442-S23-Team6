@@ -1,27 +1,40 @@
 # This program was created by Matthew Mahan of team Pterodactyl. 
 
 from hashlib import md5
-from datetime import datetime
+from datetime import datetime, timezone
+import time as t
 import sys
 
 # This function takes a date string in the format defined in the pdf and converts it to epoch time
 def parse_time(time):
+
+	print(f"Input time is {time}")
 
 	split_time = time.split(' ')
 	if (len(split_time) != 6):
 		raise RuntimeError("Time format should be 6 integers separated by spaces.")
 
 	# format is YYYY, MM, DD, HH, mm, SS
-	dt = datetime(year=int(split_time[0]), month=int(split_time[1]), day=int(split_time[2]), hour=int(split_time[3]), minute=int(split_time[4]), second=int(split_time[5]))
+	tz = timezone.utc
+	dt = datetime(year=int(split_time[0]), month=int(split_time[1]), day=int(split_time[2]), hour=int(split_time[3]), minute=int(split_time[4]), second=int(split_time[5]), tzinfo=tz)
+	print(dt.tzname())
+	print(f"Parsed time is {dt.isoformat()}")
 	if DEBUG:
-		print(int(dt.timestamp()))
+		print(f"Time stamp was: {int(dt.timestamp())}")
 
-	return int(dt.timestamp())
+	return dt
 
 # function performs the required time math and hashing 
-def hash_time(epoch, now):
+def hash_time(epoch, now, expected_elapsed=0):
 
-	elapsed_time = now - epoch
+	elapsed_time = 
+
+	if DEBUG:
+		print(f"Elapsed calc is {elapsed_time}")
+		print(f"Expected calc is {expected_elapsed}")
+		print(f"Epoch ts is {epoch}")
+		print(f"Now ts is {now}")
+		print(f"Diff is {expected_elapsed - elapsed_time}")
 
 	# calcualte the time to encode
 	mod_time = elapsed_time - (elapsed_time % 60)
@@ -44,7 +57,7 @@ def parse_code(hash_result):
 			break
 	return code
 
-def test(epoch, now, expected_hash, expected_code, test_run=1):
+def test(epoch, now, expected_hash, expected_code, test_run=1, expected_elapsed=0):
 
 	# find the time of the epoch YYYY MM DD HH mm SS
 	epoch_timestamp = parse_time(epoch)
@@ -52,7 +65,7 @@ def test(epoch, now, expected_hash, expected_code, test_run=1):
 	current_timestamp = parse_time(now)
 
 	# produce the hash and check
-	result = hash_time(epoch_timestamp, current_timestamp)
+	result = hash_time(epoch_timestamp, current_timestamp, expected_elapsed)
 	
 	print(result)
 	print(expected_hash)
@@ -66,14 +79,18 @@ def test(epoch, now, expected_hash, expected_code, test_run=1):
 
 def pdf_examples():
 
+	print(datetime.utcnow())
+	print(datetime.now())
+
 	## TEST 1 
 	test_num = 1
 	epoch = '1999 12 31 23 59 59'
 	current_time = '2013 05 06 07 43 25'
+	expected_elapsed = 421_137_806
 	expected_hash = '3ee1df13bc19a968b89629c749fee39d'
 	expected_code = 'ee93'
 	print(f"TEST {test_num} ---------------------------------------------")
-	print("Code as expected?", test(epoch, current_time, expected_hash, expected_code, test_num))
+	print("Code as expected?", test(epoch, current_time, expected_hash, expected_code, test_num, expected_elapsed))
 
 	## TEST 2 
 	test_num = 2
@@ -133,7 +150,7 @@ def options():
 		print(sys.argv)
 
 	epoch = -1
-	now = datetime.now().timestamp()
+	now = datetime.utcnow().timestamp()
 	for op in sys.argv:
 		if op in ['-E', '-7']:
 			epoch = options_epoch(op)
@@ -158,12 +175,14 @@ def main():
 	# produce the hash
 	result_hash = hash_time(epoch, now)
 	print(result_hash[:len(result_hash)//2])
+	print(result_hash[len(result_hash)//2:])
+	print(result_hash[len(result_hash)//2])
 
 	# produce the code and print
 	code = parse_code(result_hash)
 	print(code)
 
 if __name__ == "__main__":
-	DEBUG = False
+	DEBUG = True
 	main()
 	# pdf_examples()
