@@ -80,8 +80,9 @@ def recover_by_bytes(modified, sentinel, offset, interval):
 		recovered_data.append(modified[j])
 		if len(recovered_data) > 6:
 			if recovered_data[len(recovered_data)-6:] == sentinel:
-				print(f"Recovered slice: \n{recovered_data[len(recovered_data)-6:]}")
-				print(f"Sentinel: \n{sentinel}")
+				if DEBUG:
+					print(f"Recovered slice: \n{recovered_data[len(recovered_data)-6:]}")
+					print(f"Sentinel: \n{sentinel}")
 				break
 		i += 1
 		j += interval
@@ -328,8 +329,9 @@ def main():
 	# 	received_bytes = recover_by_bytes(wrapper_data, sentinel_bytes, flags['offset'], flags['interval'])
 
 	# send the received bytes into stdout 
-	# sys.stdout.flush()
+	sys.stdout.flush()
 	sys.stdout.buffer.write(bytes(received_bytes))
+	# sys.stdout.flush()
 
 	if DEBUG:
 		with open('testfile', 'wb') as testfile:
@@ -337,7 +339,7 @@ def main():
 
 # entry point 
 if __name__ == "__main__":
-	DEBUG = True
+	DEBUG = False
 	main()
 	# if DEBUG:
 	# 	pdf_test('kinda_big_wrapper.bmp', 'not_tiny_payload.gif', 'main_steg.bmp', 'result_bits.bmp')
