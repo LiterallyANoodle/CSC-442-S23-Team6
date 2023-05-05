@@ -103,6 +103,35 @@ def recover_by_bits(modified, sentinel, offset, interval):
 
 	return recovered_data[:len(recovered_data)-len(sentinel)]
 
+def recover_by_bits_sentinel(modified, sentinel, offset, interval):
+
+	# next is to extract each byte at the above indexes in the wrapper with the sequential bytes of the payload
+	# for this, it is more convenient to refer to them by a sequential index
+	recovered_data = bytearray()
+	current_byte = ''
+	i = 0
+	j = offset
+	# funky while loop that keeps track of the two scaled intervals 
+	while j < len(modified):
+
+		# for bits, this line is a bit more complex:
+		current_byte += str(modified[j] & 0x01)
+		if len(current_byte) == 8:
+			# print("-->", current_byte)
+			recovered_data.append(int(current_byte, 2))
+			current_byte = ''
+
+		if len(recovered_data) >= 6:
+			if recovered_data == sentinel:
+				if DEBUG:
+					print(f"Recovered slice: \n{recovered_data}\n")
+					print(f"Sentinel: \n{sentinel}\n")
+				break
+		i += 1
+		j += interval
+
+	return recovered_data
+
 def pdf_test(wrapper_input_filename, payload_input_filename, bytes_recovery_filename, bits_recovery_filename):
 
 	# create/obtain necessary pieces of data 
@@ -292,7 +321,29 @@ def scan_by_bytes(wrapper, sentinel, offset, start_interval=1):
 	return true_interval
 
 def scan_by_bits(wrapper, sentinel, offset, start_interval=1):
-	pass
+	
+	# return value
+	true_interval = -1
+	
+	# start with interval 1 (unlikely)
+	# check every possibile position in the interval 
+	interval = start_interval
+	while (interval * len(sentinel) * 8) < (len(wrapper) - offset): # make sure the current scan fits
+		i = offset
+		if DEBUG:
+			print(f"Current interval: {interval}")
+		while (i + (interval * len(sentinel) * 8)) < len(wrapper): # current scan. last index must be in bounds
+			
+			check_sentinel = recover_by_bits_sentinel(wrapper[i:(i + (interval * len(sentinel) * 8))], sentinel, 0, interval)
+
+			if check_sentinel == sentinel:
+				true_interval = interval
+				return interval
+
+			i += interval
+		interval += 1
+
+	return true_interval
 
 # main function
 def main():
@@ -328,7 +379,7 @@ def main():
 				  ('hide', 'byte'): (lambda wrapper, payload, sentinel, offset, interval : hide_by_bytes(wrapper, payload, sentinel, offset, interval)), 
 				  ('recover', 'bit'): (lambda wrapper, payload, sentinel, offset, interval : recover_by_bits(wrapper, sentinel, offset, interval)), 
 				  ('recover', 'byte'): (lambda wrapper, payload, sentinel, offset, interval : recover_by_bytes(wrapper, sentinel, offset, interval)),
-				  ('scan', 'bit'): (lambda wrapper, payload, sentinel, offset, interval : scan_by_bits(wrapper, sentinel, offset)),
+				  ('scan', 'bit'): (lambda wrapper, payload, sentinel, offset, interval : scan_by_bits(wrapper, sentinel, offset, interval)),
 				  ('scan', 'byte'): (lambda wrapper, payload, sentinel, offset, interval : scan_by_bytes(wrapper, sentinel, offset, interval)) 
 				}
 
@@ -339,7 +390,7 @@ def main():
 
 	# I HATE RETURN BY REFERENCE I HATE RETURN BY REFERENCE I HATE RETURN BY REFERENCE
 	# actually return by reference is ok
-	# print(type(received_bytes))
+	print(received_bytes)
 	if type(received_bytes) == 'int':
 		print(f"True interval: {received_bytes}")
 	else:
@@ -354,7 +405,7 @@ def main():
 
 # entry point 
 if __name__ == "__main__":
-	DEBUG = False
+	DEBUG = True
 	main()
 	# if DEBUG:
 	# 	pdf_test('kinda_big_wrapper.bmp', 'not_tiny_payload.gif', 'main_steg.bmp', 'result_bits.bmp')
