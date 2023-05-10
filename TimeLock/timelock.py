@@ -3,6 +3,7 @@
 from hashlib import md5
 from datetime import datetime, timezone
 import time as t
+import pytz
 import sys
 
 # This function takes a date string in the format defined in the pdf and converts it to epoch time
@@ -14,27 +15,35 @@ def parse_time(time):
 	if (len(split_time) != 6):
 		raise RuntimeError("Time format should be 6 integers separated by spaces.")
 
+
 	# format is YYYY, MM, DD, HH, mm, SS
 	tz = timezone.utc
-	dt = datetime(year=int(split_time[0]), month=int(split_time[1]), day=int(split_time[2]), hour=int(split_time[3]), minute=int(split_time[4]), second=int(split_time[5]), tzinfo=tz)
+	dt = datetime(year=int(split_time[0]), month=int(split_time[1]), day=int(split_time[2]), hour=int(split_time[3]), minute=int(split_time[4]), second=int(split_time[5]))
 	print(dt.tzname())
 	print(f"Parsed time is {dt.isoformat()}")
 	if DEBUG:
 		print(f"Time stamp was: {int(dt.timestamp())}")
 
-	return dt
+
+	# Timo's recommendation: 
+	ti = pytz.timezone("America/Chicago").localize(dt)
+	print(f"----------> {ti}")
+	ti = ti.astimezone(pytz.UTC)
+	print(f"----------> {ti}")
+
+	return int(ti.timestamp())
 
 # function performs the required time math and hashing 
 def hash_time(epoch, now, expected_elapsed=0):
 
-	elapsed_time = 
+	elapsed_time = now - epoch
 
 	if DEBUG:
 		print(f"Elapsed calc is {elapsed_time}")
 		print(f"Expected calc is {expected_elapsed}")
 		print(f"Epoch ts is {epoch}")
 		print(f"Now ts is {now}")
-		print(f"Diff is {expected_elapsed - elapsed_time}")
+		# print(f"Diff is {expected_elapsed - elapsed_time}")
 
 	# calcualte the time to encode
 	mod_time = elapsed_time - (elapsed_time % 60)
